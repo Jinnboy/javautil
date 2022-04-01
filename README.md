@@ -29,7 +29,7 @@ System.out.printf("name:%s, age:%d.\n", person.name, person.age);
 
 使用步驟：  
 1.建立和jar檔同名的cfg檔案，放到jar檔相同的目錄或專案目錄。  
-2.Config.setCategory();  
+2.Config.setCategory(); (或使用Args.load(args)，且第一參數設定<cfg_category>。)  
 3.直接呼叫Config.get(param)取得相關設定的值。  
 
 cfg檔案格式範例如下  
@@ -61,15 +61,19 @@ param2=banana
 java -jar javautil.jar <cfg_category> -paramA valueA -paramB valueB...
 ```
 第一參數，可以是<cfg_category>，也可以省略。  
-為了方便，在Args.get("paramA")時，會優先檢查指令有沒有包含-paramA該選項，沒有的話會去查找cfg有沒有設定。  
+為了方便，在呼叫Args.get("paramA")時，會優先檢查指令有沒有包含-paramA該選項，沒有的話會去查找cfg有沒有設定paramA=XXX。  
 
-可以搭配AutoBind機制一起使用。
+搭配Args.autoBind(obj)可以自動把args或cfg裡的參數綁訂到obj裡。
 ```
 java -jar javautil.jar -name Sam -age 18 ...
 ```
 ```
-Person person = new Person();
-Args.autoBind(person);
+public static void main(String[] args) {
+    Args.load(args);
+    Person person = new Person();
+    Args.autoBind(person);
+    System.out.println(person.name); // output: Sam
+}
 ```
 或者可以把變數設定在cfg裡。
 ```
@@ -83,8 +87,12 @@ birthday=2020/01/02
 java -jar javautil.jar Person1
 ```
 ```
-Person person = new Person();
-Args.autoBind(person);
+public static void main(String[] args) {
+    Args.load(args);
+    Person person = new Person();
+    Args.autoBind(person);
+    System.out.println(person.name); // output: Harry Potter
+}
 ```
 
 ## [Log]
@@ -103,8 +111,8 @@ System.out.println(Dates.parse("06 Apr 2022"));
 System.out.println(Dates.parse("20220330")); //8個數字判斷日期
 System.out.println(Dates.parse("1649174400000")); //超過8個數字判斷1970年後的毫秒
 ```
-Dates.replaceSymbol 可以把FILENAMEyyyymmdd.txt轉成FILENAME20220330.txt。  
-Dates.format 可以幫忙用SimpleDateFormat解析固定格式的日期，並把建立的SimpleDateFormat暫存起來，方便持續使用，增加效率。
+Dates.replaceSymbol() 可以把FILENAMEyyyymmdd.txt轉成FILENAME20220330.txt。  
+Dates.format() 可以幫忙用SimpleDateFormat解析固定格式的日期，並且會把建立的SimpleDateFormat暫存起來，減少重複建立的時間，方便持續使用，增加效率。
 
 ## [Paths]
 方便的Path處理工具  
@@ -116,7 +124,7 @@ Paths.getExtension() 取得副檔名
 
 ## [Regex]
 方便的正則表示法處理工具 
-把Pattern、Matcher常用的語法包成函式，方便呼叫，並且會把編譯過的Pattern暫存起來，減少重新編譯的時間。
+把Pattern、Matcher常用的語法包成函式，方便呼叫，並且會把建立過的Pattern暫存起來，減少重複建立的時間，方便持續使用，增加效率。
 ```
 String regex = "\\d+";
 String input = "0123ABCD";
@@ -135,8 +143,8 @@ String find = Regex.find(input, regex);
 Strings.isEmpty()和Strings.notEmpty() 檢查字串是否為null或""。  
 Strings.center()、Strings.leftPad()和Strings.rightPad() 可以用來填充字串，進行文字排版。
 
-Strings.split()  
+Strings.split(String str, String delimiter, int limit, boolean analyzeEscapeChar, boolean ignoreEmpty)  
 Java雖已有內建String.split()，但此函式有額外的特點。  
 特點1: 若analyzeEscapeChar=true，會自動轉換跳脫字元，且雙引號內的文字不會被切割。  
-特點2: 當分析字串str="|a|b||c"時，str.split()的結果為[a,b,c]，首尾和重複的delimiter會被省略。  
+特點2: 當分析字串str="|a|b||c"時，內建的str.split()的結果為[a,b,c]，首尾和重複的delimiter會被省略。  
        Strings.split(str)依照ignoreEmpty的false或true，結果為[,a,b,,c]或[a,b,c]。  
